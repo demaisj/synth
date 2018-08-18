@@ -9,7 +9,8 @@ namespace Synth {
 
   Voice::Voice()
   : _active(false),
-    _ready(false)
+    _ready(false),
+    _pitch(0)
   {
     //_osc.setWaveform(_osc.Waveform::Saw);
     for (int i = 0; i < 16; ++i) {
