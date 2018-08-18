@@ -15,6 +15,7 @@ CPPFLAGS	:=	$(addprefix -I, $(INCDIR)) -MD
 NAME		:=	synth
 SRCS		:=	$(addprefix $(SRCDIR)/, \
 			main.cpp \
+			Synth.cpp \
 			MIDI/Reciever.cpp \
 			MIDI/Message.cpp \
 			MIDI/Tuner.cpp \
