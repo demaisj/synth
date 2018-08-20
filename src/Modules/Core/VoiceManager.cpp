@@ -40,16 +40,18 @@ namespace Synth {
     }
   }
 
-  double VoiceManager::process()
+  void VoiceManager::process(double samples[])
   {
-    double output = 0;
 
     for (int i = 0; i < _voice_count; ++i) {
-      if (_voices[i].isActive())
-        output += _voices[i].process();
+      if (_voices[i].isActive()) {
+        double output[2];
+        _voices[i].process(output);
+        for (int i = 0; i < 2; ++i) {
+          samples[i] += output[i];
+        }
+      }
     }
-
-    return output;
   }
 
 }

@@ -10,6 +10,9 @@ namespace Synth {
     void setSampleRate(double sample_rate);
     double getSampleRate() const;
 
+    void setChannelCount(double channel_count);
+    double getChannelCount() const;
+
     void setDecay(double decay);
     double getDecay() const;
 
@@ -19,18 +22,20 @@ namespace Synth {
     void setMix(double mix);
     double getMix() const;
 
-    double process(double sample);
+    void process(double samples[]);
 
   private:
     double _sample_rate;
+    double _channel_count;
     double _decay;
     double _feedback;
     double _mix;
 
-    double _cursor;
-    std::vector<double> _buffer;
+    std::vector<double> _cursor;
+    std::vector<std::vector<double>> _buffer;
 
     void updateBufferSize();
+    void updateBufferCount();
   };
 
 }

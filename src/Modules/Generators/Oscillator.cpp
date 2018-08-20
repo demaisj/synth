@@ -11,10 +11,12 @@ namespace Synth {
   Oscillator::Oscillator()
   : _waveform(Waveform::Saw),
     _frequency(440),
-    _sample_rate(44100)
+    _sample_rate(44100),
+    _channel_count(2)
   {
-    reset();
     updatePhaseIncrement();
+    updatePhaseBuffer();
+    reset();
   }
   Oscillator::~Oscillator()
   {}
@@ -40,44 +42,58 @@ namespace Synth {
   double Oscillator::getSampleRate() const
   { return _sample_rate; }
 
-  double Oscillator::generate()
+  void Oscillator::setChannelCount(double channel_count)
   {
-    double sample = 0;
+    _channel_count = _channel_count;
+    updatePhaseBuffer();
+  }
+  double Oscillator::getChannelCount() const
+  { return _channel_count; }
 
-    switch (_waveform) {
-    case Waveform::Sine: // sin(x)
-      sample = sin(_phase);
-      break;
+  void Oscillator::process(double samples[])
+  {
+    for (int i = 0; i < _channel_count; ++i) {
+      switch (_waveform) {
+      case Waveform::Sine: // sin(x)
+        samples[i] = sin(_phase[i]);
+        break;
 
-    case Waveform::Saw: // 1-(2x)/(2pi)
-      sample = 1.0 - (2 * _phase / M_2PI);
-      break;
+      case Waveform::Saw: // 1-(2x)/(2pi)
+        samples[i] = 1.0 - (2 * _phase[i] / M_2PI);
+        break;
 
-    case Waveform::Triangle: // abs(1-abs(((2x)-pi)/(2pi)))*2-1
-      sample = Util::abs(1 - Util::abs((2 * _phase - M_PI) / M_2PI)) * 2 - 1;
-      break;
+      case Waveform::Triangle: // abs(1-abs(((2x)-pi)/(2pi)))*2-1
+        samples[i] = Util::abs(1 - Util::abs((2 * _phase[i] - M_PI) / M_2PI)) * 2 - 1;
+        break;
 
-    case Waveform::Square: // 1+2*floor(sin(x))
-      if (_phase <= M_PI)
-        sample = 1.0;
-      else
-        sample = -1.0;
-      break;
+      case Waveform::Square: // 1+2*floor(sin(x))
+        if (_phase[i] <= M_PI)
+          samples[i] = 1.0;
+        else
+          samples[i] = -1.0;
+        break;
+      }
+      _phase[i] += _phase_increment;
+      if (_phase[i] > M_2PI)
+        _phase[i] -= M_2PI;
     }
-    _phase += _phase_increment;
-    if (_phase > M_2PI)
-      _phase -= M_2PI;
-    return sample;
   }
 
   void Oscillator::reset()
   {
-    _phase = fmod(rand(), M_2PI);
+    for (int i = 0; i < _channel_count; ++i) {
+      _phase[i] = fmod(rand(), M_2PI);
+    }
   }
 
   void Oscillator::updatePhaseIncrement()
   {
     _phase_increment = _frequency * M_2PI / _sample_rate;
+  }
+
+  void Oscillator::updatePhaseBuffer()
+  {
+    _phase.resize(_channel_count, 0);
   }
 
 }

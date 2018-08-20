@@ -14,6 +14,9 @@ namespace Synth {
     void setSampleRate(double sample_rate);
     double getSampleRate() const;
 
+    void setChannelCount(double channel_count);
+    double getChannelCount() const;
+
     void setCutoff(double cutoff);
     double getCutoff() const;
 
@@ -23,10 +26,11 @@ namespace Synth {
     void setMode(Mode mode);
     Mode getMode() const;
 
-    double process(double sample);
+    void process(double samples[]);
 
   private:
     double _sample_rate;
+    double _channel_count;
 
     Mode _mode = Mode::LowPass;
     double _cutoff;

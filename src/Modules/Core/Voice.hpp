@@ -16,7 +16,7 @@ namespace Synth {
 
     int getNote() const;
 
-    double process();
+    void process(double samples[]);
 
     void setPitch(int amount);
   private:

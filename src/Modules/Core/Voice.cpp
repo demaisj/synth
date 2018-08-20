@@ -54,24 +54,30 @@ namespace Synth {
   int Voice::getNote() const
   { return _note; }
 
-  double Voice::process()
+  void Voice::process(double samples[])
   {
     //double output = _osc.generate();
-    double output = 0;
+
     for (int i = 0; i < 16; ++i) {
       double blend = 0.8;
       if (round(i / 8) == 0)
         blend = 1;
-      output += _osc[i].generate() * (blend / 16);
+
+      double output[2];
+      _osc[i].process(output);
+      for (int i = 0; i < 2; ++i) {
+        samples[i] += output[i] * (blend / 16);
+      }
     }
 
-    output *= _velo;
-    output *= _env.generate();
+    for (int i = 0; i < 2; ++i)
+    {
+      samples[i] *= _velo;
+      samples[i] *= _env.generate();
+    }
 
     if (_env.getStage() == _env.Stage::Off)
       _active = false;
-
-    return output;
   }
 
   void Voice::setPitch(int amount)

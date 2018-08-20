@@ -1,3 +1,5 @@
+#include <vector>
+
 namespace Synth {
 
   class Oscillator {
@@ -21,7 +23,10 @@ namespace Synth {
     void setSampleRate(double sample_rate);
     double getSampleRate() const;
 
-    double generate();
+    void setChannelCount(double channel_count);
+    double getChannelCount() const;
+
+    void process(double samples[]);
 
     void reset();
 
@@ -29,11 +34,13 @@ namespace Synth {
     Waveform _waveform;
     double _frequency;
     double _sample_rate;
+    double _channel_count;
 
-    double _phase;
+    std::vector<double> _phase;
     double _phase_increment;
 
     void updatePhaseIncrement();
+    void updatePhaseBuffer();
   };
 
 }

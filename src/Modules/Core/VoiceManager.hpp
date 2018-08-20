@@ -12,7 +12,7 @@ namespace Synth {
 
     void pitchBend(int amount);
 
-    double process();
+    void process(double samples[]);
 
   private:
     bool _legato = false;

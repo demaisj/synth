@@ -75,10 +75,10 @@ namespace Synth {
         }
       } while (pass);
 
-      double sample = manager.process();
-      sample = filter.process(sample);
-      sample = delay.process(sample);
-      double frame[2] = { sample, sample };
+      double frame[2] = { 0 };
+      manager.process(frame);
+      filter.process(frame);
+      delay.process(frame);
       output.feed(frame);
     }
   }
