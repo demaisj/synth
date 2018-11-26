@@ -13,8 +13,13 @@ public:
   {
     prober_results results;
 
+
+    #if defined(__linux__)
+
     fs_device::probe(results);
     //alsa_device::probe(results);
+
+    #endif
 
     return results;
   }

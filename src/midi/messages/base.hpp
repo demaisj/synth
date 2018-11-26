@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <iostream>
+#include <string>
 
 #include "../protocol.hpp"
 
