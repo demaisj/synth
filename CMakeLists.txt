@@ -1,11 +1,11 @@
 project(synth)
 set(CMAKE_CXX_STANDARD 17)
 
-if(LINUX)
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
   set(PLATFORM_LIBS stdc++fs asound)
 
-elseif(WIN32)
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
   set(PLATFORM_LIBS Winmm)
 
