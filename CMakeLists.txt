@@ -5,6 +5,10 @@ if(LINUX)
 
   set(PLATFORM_LIBS stdc++fs asound)
 
+elseif(WIN32)
+
+  set(PLATFORM_LIBS Winmm)
+
 endif()
 
 add_executable(${PROJECT_NAME}
