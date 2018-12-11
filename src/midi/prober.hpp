@@ -16,8 +16,8 @@ public:
 
     #if defined(__linux__)
 
-    fs_device::probe(results);
-    //alsa_device::probe(results);
+    oss_device::probe(results);
+    alsa_device::probe(results);
 
     #elif defined(_WIN32) || defined(_WIN64)
 

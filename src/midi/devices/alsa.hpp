@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cstring>
+#include <string>
 #include <alsa/asoundlib.h>
 
 #include "../types.hpp"
@@ -11,15 +11,18 @@ namespace midi {
 class alsa_device : public device_base
 {
 public:
+  alsa_device(int client_id, int port_id, const char *name)
+  : _client_id(client_id), _port_id(port_id), _name(name)
+  {}
 
   const std::string string() const
   {
-    return "midi::alsa_device()";
+    return "midi::alsa_device(client_id=" + std::to_string(_client_id) + ", port_id=" + std::to_string(_port_id) + ", name=" + _name + ")";
   }
 
   const std::string name() const
   {
-    return "ALSA RawMIDI: ";
+    return "ALSA: " + _name;
   }
 
   void open()
@@ -32,114 +35,54 @@ public:
 
   }
 
+  size_t read(unsigned char data[])
+  {
+    return 0;
+  }
+
   static void probe(prober_results &results)
   {
-    int card = -1;
+    snd_seq_t *seq;
 
-    while (snd_card_next(&card) >= 0 && card >= 0) {
+    /* open sequencer */
+    if (snd_seq_open(&seq, "default", SND_SEQ_OPEN_DUPLEX, 0) < 0)
+      return;
 
-      char name[6];
-      sprintf(name, "hw:%d", card);
+    /* set our client's name */
+    if (snd_seq_set_client_name(seq, "synth") < 0)
+      return;
 
-      snd_ctl_t *handle;
-      if (snd_ctl_open(&handle, name, 0) != 0) {
-        continue;
+    snd_seq_client_info_t *cinfo;
+    snd_seq_port_info_t *pinfo;
+
+    snd_seq_client_info_alloca(&cinfo);
+    snd_seq_port_info_alloca(&pinfo);
+
+    snd_seq_client_info_set_client(cinfo, -1);
+    while (snd_seq_query_next_client(seq, cinfo) >= 0) {
+      int client = snd_seq_client_info_get_client(cinfo);
+
+      snd_seq_port_info_set_client(pinfo, client);
+      snd_seq_port_info_set_port(pinfo, -1);
+      while (snd_seq_query_next_port(seq, pinfo) >= 0) {
+        /* we need both READ and SUBS_READ */
+        if ((snd_seq_port_info_get_capability(pinfo)
+             & (SND_SEQ_PORT_CAP_READ | SND_SEQ_PORT_CAP_SUBS_READ))
+            != (SND_SEQ_PORT_CAP_READ | SND_SEQ_PORT_CAP_SUBS_READ))
+                continue;
+        results.push_back(std::make_unique<alsa_device>(
+          snd_seq_port_info_get_client(pinfo),
+          snd_seq_port_info_get_port(pinfo),
+          snd_seq_port_info_get_name(pinfo)
+        ));
       }
-
-      snd_ctl_card_info_t *info;
-      if (snd_ctl_card_info_malloc(&info) != 0) {
-        snd_ctl_close(handle);
-        continue;
-      }
-
-      if (snd_ctl_card_info(handle, info) != 0) {
-        snd_ctl_card_info_free(info);
-        snd_ctl_close(handle);
-        continue;
-      }        printf("Card #%d: id=%s, driver=%s, name=%s, longname=%s, mixername=%s, components=%s\n",
-                snd_ctl_card_info_get_card(info),
-                snd_ctl_card_info_get_id(info),
-                snd_ctl_card_info_get_driver(info),
-                snd_ctl_card_info_get_name(info),
-                snd_ctl_card_info_get_longname(info),
-                snd_ctl_card_info_get_mixername(info),
-                snd_ctl_card_info_get_components(info));
-
-      snd_ctl_card_info_free(info);
-
-      snd_ctl_elem_list_t *list;
-      if (snd_ctl_elem_list_malloc(&list) != 0) {
-        snd_ctl_close(handle);
-        continue;
-      }
-
-      if (snd_ctl_elem_list(handle, list) != 0) {
-        snd_ctl_elem_list_free(list);
-        snd_ctl_close(handle);
-        continue;
-      }
-
-                unsigned int used = snd_ctl_elem_list_get_used(list);
-                unsigned int count = snd_ctl_elem_list_get_count(list);
-                printf("\tElement used = %d, count = %d.  Allocating space for %d entries...\n", used, count, count);
-
-      if (snd_ctl_elem_list_alloc_space(list, count) != 0) {
-        snd_ctl_elem_list_free(list);
-        snd_ctl_close(handle);
-      }
-
-      if (snd_ctl_elem_list(handle, list) != 0) {
-        snd_ctl_elem_list_free(list);
-        snd_ctl_close(handle);
-        continue;
-      }
-
-                used = snd_ctl_elem_list_get_used(list);
-                count = snd_ctl_elem_list_get_count(list);
-                printf("\tElement used = %d, count = %d\n", used, count);
-
-      for (unsigned int i = 0; i < used; i++) {
-        printf("\tElement #%d: numid=%d, interface=%s, device=%d, subdevice=%d, name=%s, index=%d, elem_id follows:\n",
-                i,
-                snd_ctl_elem_list_get_numid(list, i),
-                snd_ctl_elem_iface_name(snd_ctl_elem_list_get_interface(list, i)),
-                snd_ctl_elem_list_get_device(list, i),
-                snd_ctl_elem_list_get_subdevice(list, i),
-                snd_ctl_elem_list_get_name(list, i),
-                snd_ctl_elem_list_get_index(list, i));
-snd_ctl_elem_id_t *id;
-        if (snd_ctl_elem_id_malloc(&id))
-        {
-                printf("Error allocating snd_ctl_elem_id_t, aborting\n");
-                return;
-        }
-        snd_ctl_elem_list_get_id(list, i, id);
-                printf("\t\telem_id: numid=%d, interface=%s, device=%d, subdevice=%d, name=%s, index=%d\n",
-                snd_ctl_elem_id_get_numid(id),
-                snd_ctl_elem_iface_name(snd_ctl_elem_id_get_interface(id)),
-                snd_ctl_elem_id_get_device(id),
-                snd_ctl_elem_id_get_subdevice(id),
-                snd_ctl_elem_id_get_name(id),
-                snd_ctl_elem_id_get_index(id));
-        snd_ctl_elem_id_free(id);
-      }
-
-      snd_ctl_elem_list_free_space(list);
-      snd_ctl_elem_list_free(list);
-
-      snd_ctl_close(handle);
-
-      printf("\n");
-
-      /*char *name;
-      snd_card_get_name(card, &name);
-      char *longname;
-      snd_card_get_longname(card, &longname);
-      std::cout << name << ", " << longname << std::endl;
-      free(name);
-      free(longname);*/
     }
   }
+
+private:
+  int _client_id;
+  int _port_id;
+  std::string _name;
 
 };
 

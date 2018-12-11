@@ -11,24 +11,24 @@
 
 namespace midi {
 
-class fs_device : public device_base
+class oss_device : public device_base
 {
 public:
-  fs_device(const std::filesystem::path &path)
+  oss_device(const std::filesystem::path &path)
   : _path(path) {}
-  ~fs_device()
+  ~oss_device()
   {
     close();
   }
 
   const std::string string() const
   {
-    return "midi::fs_device(path=" + _path.string() + ")";
+    return "midi::oss_device(path=" + _path.string() + ")";
   }
 
   const std::string name() const
   {
-    return "File system: " + _path.string();
+    return "OSS: " + _path.string();
   }
 
   void open()
@@ -66,7 +66,7 @@ public:
   {
     for (const auto &entry : std::filesystem::directory_iterator("/dev")) {
       if (entry.path().filename().string().find("midi", 0) == 0)
-        results.push_back(std::make_unique<fs_device>(entry.path()));
+        results.push_back(std::make_unique<oss_device>(entry.path()));
     }
   }
 
