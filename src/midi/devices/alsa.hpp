@@ -11,7 +11,7 @@ namespace midi {
 class alsa_device : public device_base
 {
 public:
-  alsa_device(int client_id, int port_id, const char *name)
+  alsa_device(int client_id, int port_id, const std::string &name)
   : _client_id(client_id), _port_id(port_id), _name(name)
   {}
 
@@ -73,7 +73,7 @@ public:
         results.push_back(std::make_unique<alsa_device>(
           snd_seq_port_info_get_client(pinfo),
           snd_seq_port_info_get_port(pinfo),
-          snd_seq_port_info_get_name(pinfo)
+          std::string(snd_seq_client_info_get_name(cinfo)) + ": " + snd_seq_port_info_get_name(pinfo)
         ));
       }
     }
